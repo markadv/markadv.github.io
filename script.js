@@ -16,6 +16,7 @@ let bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
 let score = 0,
   bestScore = 0;
 let gameOver = false;
+let retrieveBestScore = JSON.parse(window.localStorage.getItem("bestScore"));
 
 function gameLoop() {
   var now = Date.now();
@@ -30,6 +31,7 @@ function gameLoop() {
   detectCollision();
   displayScore();
   displayInstructions();
+  console.log(retrieveBestScore);
 }
 
 function detectCollision() {
@@ -150,10 +152,11 @@ document.onkeydown = (e) => {
       bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
       pipe.length = 0;
       gameOver = false;
-      score = 0;
       if (bestScore < score) {
         bestScore = score;
+        window.localStorage.setItem("bestScore", JSON.stringify(bestScore));
       }
+      score = 0;
       myInterval = setInterval(gameLoop, 1000 / 24);
     }
   }
