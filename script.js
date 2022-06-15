@@ -1,5 +1,4 @@
 let xBase = 0;
-let lastTime;
 const base = document.getElementById("base");
 const pipetop = document.getElementsByClassName("pipetop");
 const pipebot = document.getElementsByClassName("pipebot");
@@ -7,30 +6,39 @@ const pipeContainer = document.getElementById("pipeContainer");
 const scoreContainer = document.getElementById("score");
 const bestscoreContainer = document.getElementById("bestScore");
 const instructions = document.getElementById("instructions");
+let swooshSound = new Audio("audio/wing.ogg");
+let hitSound = new Audio("audio/hit.ogg");
+let dieSound = new Audio("audio/die.ogg");
+let pointSound = new Audio("audio/point.ogg");
+
 let pipe = [];
 let birdSprite = document.getElementById("bird");
-//needed for delta time so the game is not depended on pc
-let lastUpdate = Date.now();
 let myInterval = setInterval(gameLoop, 1000 / 24);
+let birdInterval = setInterval(birdLoop, 1000 / 24);
 let bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
 let score = 0,
   bestScore = 0;
 let gameOver = false;
-let retrieveBestScore = JSON.parse(window.localStorage.getItem("bestScore"));
 
 function gameLoop() {
-  var now = Date.now();
-  var dt = now - lastUpdate;
-  lastUpdate = now;
+  bestScore = JSON.parse(window.localStorage.getItem("bestScore"));
   moveBase();
   spawnPipe();
   displayPipe();
   movePipe();
-  moveBird();
-  displayBird();
   detectCollision();
   displayScore();
   displayInstructions();
+}
+//separate for death animation
+function birdLoop() {
+  moveBird();
+  displayBird();
+}
+
+function deathAnimation() {
+  // bird.velY -= 1;
+  dieSound.play();
 }
 
 function detectCollision() {
@@ -41,6 +49,8 @@ function detectCollision() {
     if (bird.x < pipe[i].x + 50 && bird.x + 32 > pipe[i].x && bird.y < pipe[i].topH && bird.y + 24 > 0) {
       gameOver = true;
       clearInterval(myInterval);
+      hitSound.play();
+      deathAnimation();
     }
     if (
       bird.x < pipe[i].x + 50 &&
@@ -49,12 +59,15 @@ function detectCollision() {
       bird.y + 24 > pipe[i].botY
     ) {
       gameOver = true;
-
       clearInterval(myInterval);
+      hitSound.play();
+      deathAnimation();
     }
     if (bird.y > 292) {
       gameOver = true;
       clearInterval(myInterval);
+      hitSound.play();
+      deathAnimation();
     }
   }
 }
@@ -89,6 +102,7 @@ function movePipe() {
     if (pipe[i].x < bird.x && !pipe[i].isScore) {
       score++;
       pipe[i].isScore = true;
+      pointSound.play();
     }
   }
 }
@@ -141,14 +155,24 @@ function displayBird() {
   }
   if (bird.y >= 296) {
     bird.y = 296;
+    clearInterval(birdInterval);
   }
 }
 
+let flapAllowed = true;
+
+function flapRate() {
+  flapAllowed = true;
+  clearInterval(flapInterval);
+}
+
 document.onkeydown = (e) => {
-  if (e.keyCode == 32) {
+  if (e.keyCode == 32 && flapAllowed) {
+    flapAllowed = false;
+    flapInterval = setInterval(flapRate, 319.5);
+    swooshSound.play();
     bird.velY = bird.speed;
     if (gameOver) {
-      bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
       pipe.length = 0;
       gameOver = false;
       if (bestScore < score) {
@@ -156,16 +180,22 @@ document.onkeydown = (e) => {
         window.localStorage.setItem("bestScore", JSON.stringify(bestScore));
       }
       score = 0;
+      clearInterval(birdInterval);
       myInterval = setInterval(gameLoop, 1000 / 24);
+      birdInterval = setInterval(birdLoop, 1000 / 24);
+      bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
+      displayBird();
     }
   }
 };
 
 document.ontouchstart = (e) => {
-  if (e.type == "touchstart") {
+  if (e.type == "touchstart" && flapAllowed) {
+    flapAllowed = false;
+    flapInterval = setInterval(flapRate, 319.5);
+    swooshSound.play();
     bird.velY = bird.speed;
     if (gameOver) {
-      bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
       pipe.length = 0;
       gameOver = false;
       if (bestScore < score) {
@@ -173,7 +203,14 @@ document.ontouchstart = (e) => {
         window.localStorage.setItem("bestScore", JSON.stringify(bestScore));
       }
       score = 0;
+      clearInterval(birdInterval);
       myInterval = setInterval(gameLoop, 1000 / 24);
+      birdInterval = setInterval(birdLoop, 1000 / 24);
+      bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
+      displayBird();
     }
   }
 };
+
+function loadNew() {}
+let loadInterval = setTimeout(loadNew, 5000);
