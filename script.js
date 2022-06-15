@@ -31,7 +31,6 @@ function gameLoop() {
   detectCollision();
   displayScore();
   displayInstructions();
-  console.log(retrieveBestScore);
 }
 
 function detectCollision() {
@@ -163,7 +162,6 @@ document.onkeydown = (e) => {
 };
 
 document.ontouchstart = (e) => {
-  console.log(e);
   if (e.type == "touchstart") {
     bird.velY = bird.speed;
     if (gameOver) {
