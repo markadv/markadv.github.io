@@ -161,3 +161,21 @@ document.onkeydown = (e) => {
     }
   }
 };
+
+document.ontouchstart = (e) => {
+  console.log(e);
+  if (e.type == "touchstart") {
+    bird.velY = bird.speed;
+    if (gameOver) {
+      bird = { x: 127, y: 160, frame: 0, speed: -8, velY: 0 };
+      pipe.length = 0;
+      gameOver = false;
+      if (bestScore < score) {
+        bestScore = score;
+        window.localStorage.setItem("bestScore", JSON.stringify(bestScore));
+      }
+      score = 0;
+      myInterval = setInterval(gameLoop, 1000 / 24);
+    }
+  }
+};
